@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Familiehub</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="app">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <span class="logo">🏠 Familiehub</span>
+    <div class="who-bar">
+      <span class="who-label">Du er:</span>
+      <div id="who-buttons" style="display:flex;gap:4px;"></div>
+    </div>
+  </div>
+
+  <!-- NAVIGASJON -->
+  <div class="nav">
+    <button class="active" onclick="showPage('kalender')">Kalender</button>
+    <button onclick="showPage('hendelser')">Hendelser</button>
+    <button onclick="showPage('middag')">Middag</button>
+    <button onclick="showPage('kjoleskap')">Kjøleskap</button>
+    <button onclick="showPage('oppgaver')">Oppgaver</button>
+    <button onclick="showPage('handlelist')">Handleliste</button>
+    <button onclick="showPage('chat')">Chat</button>
+  </div>
+
+  <!-- KALENDER -->
+  <div class="page active" id="page-kalender">
+    <div class="cal-layout">
+      <div class="week-wrap">
+        <div class="week-header" id="week-header"></div>
+        <div class="week-grid"   id="week-grid"></div>
+      </div>
+      <div class="cal-side">
+        <div class="side-h">Denne uken</div>
+        <div class="side-stat"><div class="side-stat-l">Middager</div>    <div class="side-stat-v" id="s-dinners">0</div></div>
+        <div class="side-stat"><div class="side-stat-l">Oppgaver gjort</div><div class="side-stat-v" id="s-chores">0</div></div>
+        <div class="side-stat"><div class="side-stat-l">Hendelser</div>   <div class="side-stat-v" id="s-events">0</div></div>
+        <div class="side-stat"><div class="side-stat-l">Dine poeng</div>  <div class="side-stat-v" id="s-pts">0</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HENDELSER -->
+  <div class="page" id="page-hendelser">
+    <div class="events-outer">
+      <div style="font-size:16px;font-weight:500;color:var(--text-primary);margin-bottom:14px;">Familiehendelser</div>
+      <div id="event-list"></div>
+      <button class="add-btn-plain" onclick="openM('event')">+ Legg til hendelse</button>
+    </div>
+  </div>
+
+  <!-- MIDDAG -->
+  <div class="page" id="page-middag">
+    <div class="din-outer">
+      <div style="font-size:16px;font-weight:500;color:var(--text-primary);margin-bottom:12px;">Middagsplan</div>
+      <div id="din-list"></div>
+      <button class="add-btn-plain" onclick="openM('din')">+ Legg til middag</button>
+    </div>
+  </div>
+
+  <!-- KJØLESKAP -->
+  <div class="page" id="page-kjoleskap">
+    <div class="fridge-outer">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+        <div style="font-size:16px;font-weight:500;color:var(--text-primary);">Kjøleskap og pantry</div>
+        <div style="font-size:12px;color:var(--text-secondary);">Nok = ikke på handlelisten</div>
+      </div>
+      <div class="fridge-wrap">
+        <div class="fridge-handle"></div>
+        <div><span class="fridge-section-label kjolelabel">Kjøleskap</span></div>
+        <div class="fridge-shelf" id="fridge-shelf" style="margin-top:8px;"></div>
+        <div class="fridge-divider"></div>
+        <div><span class="fridge-section-label pantrylabel">Pantry</span></div>
+        <div class="fridge-shelf" id="pantry-shelf" style="margin-top:8px;"></div>
+      </div>
+      <div class="freezer-wrap">
+        <div><span class="freezer-label">Fryser</span></div>
+        <div class="fridge-shelf" id="freezer-shelf" style="margin-top:8px;"></div>
+      </div>
+      <button class="add-btn-plain" style="margin-top:12px;" onclick="openM('fridge')">+ Legg til vare</button>
+    </div>
+  </div>
+
+  <!-- OPPGAVER -->
+  <div class="page" id="page-oppgaver">
+    <div class="chores-outer">
+      <div style="font-size:16px;font-weight:500;margin-bottom:10px;color:var(--text-primary);">Oppgaver denne uken</div>
+      <div class="member-tabs" id="member-tabs"></div>
+      <div class="chore-list"  id="chore-list"></div>
+      <button class="add-btn-plain" onclick="openM('chore')">+ Legg til oppgave</button>
+    </div>
+  </div>
+
+  <!-- HANDLELISTE -->
+  <div class="page" id="page-handlelist">
+    <div class="groc-outer">
+      <div style="font-size:16px;font-weight:500;margin-bottom:12px;color:var(--text-primary);">Handleliste</div>
+      <div class="groc-sec"><h3>Må kjøpes</h3><div id="g-need"></div></div>
+      <div class="groc-sec">
+        <h3>Lagt til manuelt</h3>
+        <div id="g-manual"></div>
+        <div class="add-groc-row">
+          <input id="manual-input" type="text" placeholder="F.eks. brød, sjampo..."
+                 onkeydown="if(event.key==='Enter')addManual()">
+          <button onclick="addManual()">Legg til</button>
+        </div>
+      </div>
+      <div class="groc-sec"><h3>Har allerede</h3><div id="g-have"></div></div>
+    </div>
+  </div>
+
+  <!-- CHAT -->
+  <div class="page" id="page-chat">
+    <div class="chat-outer">
+      <div class="chat-msgs" id="chat-msgs"></div>
+      <div class="chat-input-row">
+        <input id="chat-in" type="text" placeholder="Skriv til familien..."
+               onkeydown="if(event.key==='Enter')sendChat()">
+        <button class="chat-send" onclick="sendChat()">Send</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /.app -->
+
+<!-- MODALER -->
+<div class="modal-wrap" id="m-event">
+  <div class="modal">
+    <h3>Legg til hendelse</h3>
+    <label>Tittel</label><input id="ev-title" type="text" placeholder="F.eks. Fotballkamp">
+    <label>Dato</label><input id="ev-date" type="number" min="1" max="31" value="13">
+    <label>Måned</label>
+    <select id="ev-month">
+      <option>Jan</option><option>Feb</option><option>Mar</option><option selected>Apr</option>
+      <option>Mai</option><option>Jun</option><option>Jul</option><option>Aug</option>
+      <option>Sep</option><option>Okt</option><option>Nov</option><option>Des</option>
+    </select>
+    <label>Klokkeslett</label><input id="ev-time" type="text" placeholder="F.eks. 16:00">
+    <label>Sted</label><input id="ev-place" type="text" placeholder="F.eks. Idrettshallen">
+    <label>Type</label>
+    <select id="ev-type">
+      <option value="familie">Familie</option><option value="sport">Sport</option>
+      <option value="skole">Skole</option><option value="annet">Annet</option>
+    </select>
+    <label>Hvem er med?</label>
+    <div class="member-check-row" id="ev-who-checks"></div>
+    <div class="mactions">
+      <button class="mcancel" onclick="closeM('event')">Avbryt</button>
+      <button class="mbtn"    onclick="saveEvent()">Legg til</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-wrap" id="m-din">
+  <div class="modal">
+    <h3>Legg til middag</h3>
+    <label>Navn</label><input id="din-name" type="text" placeholder="F.eks. Pasta Bolognese">
+    <label>Dag</label>
+    <select id="din-day">
+      <option value="0">Mandag</option><option value="1">Tirsdag</option>
+      <option value="2" selected>Onsdag</option><option value="3">Torsdag</option>
+      <option value="4">Fredag</option><option value="5">Lørdag</option><option value="6">Søndag</option>
+    </select>
+    <label>Ingredienser (kommaseparert)</label>
+    <input id="din-ings" type="text" placeholder="pasta, kjøttdeig, tomater">
+    <div class="mactions">
+      <button class="mcancel" onclick="closeM('din')">Avbryt</button>
+      <button class="mbtn"    onclick="saveDin()">Legg til</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-wrap" id="m-fridge">
+  <div class="modal">
+    <h3>Legg til vare</h3>
+    <label>Navn</label><input id="fr-name" type="text" placeholder="F.eks. Smør">
+    <label>Seksjon</label>
+    <select id="fr-section">
+      <option value="fridge">Kjøleskap</option>
+      <option value="pantry">Pantry</option>
+      <option value="freezer">Fryser</option>
+    </select>
+    <label>Enhet</label><input id="fr-unit" type="text" placeholder="F.eks. pakker, liter">
+    <label>Antall</label><input id="fr-qty" type="number" min="0" value="1">
+    <div class="mactions">
+      <button class="mcancel" onclick="closeM('fridge')">Avbryt</button>
+      <button class="mbtn"    onclick="saveFridge()">Legg til</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-wrap" id="m-chore">
+  <div class="modal">
+    <h3>Legg til oppgave</h3>
+    <label>Navn</label><input id="ch-name" type="text" placeholder="F.eks. Støvsuge stuen">
+    <label>Ansvarlig</label><select id="ch-who"></select>
+    <label>Dag</label>
+    <select id="ch-day">
+      <option value="0">Mandag</option><option value="1">Tirsdag</option>
+      <option value="2" selected>Onsdag</option><option value="3">Torsdag</option>
+      <option value="4">Fredag</option><option value="5">Lørdag</option><option value="6">Søndag</option>
+    </select>
+    <label>Poeng</label>
+    <select id="ch-pts">
+      <option value="1">1 pt — Liten</option><option value="2" selected>2 pt — Vanlig</option>
+      <option value="3">3 pt — Stor</option><option value="5">5 pt — Kjempe</option>
+    </select>
+    <div class="mactions">
+      <button class="mcancel" onclick="closeM('chore')">Avbryt</button>
+      <button class="mbtn"    onclick="saveChore()">Legg til</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-wrap" id="m-cal">
+  <div class="modal">
+    <h3>Legg til i kalender</h3>
+    <label>Type</label>
+    <select id="cal-type"><option value="chore">Oppgave</option><option value="shop">Handling</option></select>
+    <label>Navn</label><input id="cal-name" type="text" placeholder="F.eks. Støvsuge">
+    <div class="mactions">
+      <button class="mcancel" onclick="closeM('cal')">Avbryt</button>
+      <button class="mbtn"    onclick="saveCal()">Legg til</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast"  id="toast"></div>
+<div class="saving" id="saving">Lagrer...</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
