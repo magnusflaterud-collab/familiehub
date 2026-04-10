@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+{% block title %}{{ family.name }} — Familiehub{% endblock %}
+{% block content %}
+
+<!-- TOPBAR -->
+<div class="topbar sticky">
+  <span class="logo">🏠 {{ family.name }}</span>
+  <div class="who-bar">
+    <span class="who-label">Aktiv:</span>
+    <div id="who-btns"></div>
+  </div>
+  <a href="/family" class="topbar-link">Familie ⚙</a>
+  <a href="/logout" class="topbar-link">Logg ut</a>
+</div>
+
+<!-- NAV TABS -->
+<div class="nav-tabs sticky-tabs">
+  <button class="tab-btn active" onclick="showTab('kalender')">Kalender</button>
+  <button class="tab-btn" onclick="showTab('oppgaver')">Oppgaver</button>
+  <button class="tab-btn" onclick="showTab('middag')">Middag</button>
+  <button class="tab-btn" onclick="showTab('kjoleskap')">Kjøleskap</button>
+  <button class="tab-btn" onclick="showTab('handlelist')">Handleliste</button>
+  <button class="tab-btn" onclick="showTab('chat')">Chat</button>
+  <button class="scroll-today-btn" onclick="scrollToToday()" id="scroll-today" style="display:none;">↓ I dag</button>
+</div>
+
+<!-- ─── KALENDER ─────────────────────────────────────────────────────────── -->
+<div id="tab-kalender" class="tab-content">
+  <div id="cal-container"></div>
+</div>
+
+<!-- ─── OPPGAVER ─────────────────────────────────────────────────────────── -->
+<div id="tab-oppgaver" class="tab-content" style="display:none;">
+  <div class="section-wrap">
+    <div class="section-header">
+      <h2>Oppgaver</h2>
+      {% if user.role == 'parent' %}
+      <button class="btn-add" onclick="openModal('chore-modal')">+ Ny oppgave</button>
+      {% endif %}
+    </div>
+    <div class="member-filter" id="chore-filter"></div>
+    <div id="chore-list" class="chore-list"></div>
+  </div>
+</div>
+
+<!-- ─── MIDDAG ───────────────────────────────────────────────────────────── -->
+<div id="tab-middag" class="tab-content" style="display:none;">
+  <div class="section-wrap">
+    <div class="section-header">
+      <h2>Middagsplan</h2>
+      <button class="btn-add" onclick="openModal('dinner-modal')">+ Legg til</button>
+    </div>
+    <div id="dinner-list"></div>
+  </div>
+</div>
+
+<!-- ─── KJØLESKAP ────────────────────────────────────────────────────────── -->
+<div id="tab-kjoleskap" class="tab-content" style="display:none;">
+  <div class="section-wrap">
+    <div class="section-header">
+      <h2>Kjøleskap &amp; Pantry</h2>
+      <button class="btn-add" onclick="openModal('fridge-modal')">+ Legg til</button>
+    </div>
+    <div id="fridge-view"></div>
+  </div>
+</div>
+
+<!-- ─── HANDLELISTE ───────────────────────────────────────────────────────── -->
+<div id="tab-handlelist" class="tab-content" style="display:none;">
+  <div class="section-wrap">
+    <div class="section-header">
+      <h2>Handleliste</h2>
+      <button class="btn-sm" onclick="apiPost('/api/groceries/clear').then(loadGroceries)">Fjern avkryssede</button>
+    </div>
+    <div class="groc-add-row">
+      <input id="groc-input" type="text" placeholder="Legg til vare..." onkeydown="if(event.key==='Enter')addGrocery()">
+      <button class="btn-add" onclick="addGrocery()">Legg til</button>
+    </div>
+    <div id="groc-list"></div>
+  </div>
+</div>
+
+<!-- ─── CHAT ─────────────────────────────────────────────────────────────── -->
+<div id="tab-chat" class="tab-content chat-tab" style="display:none;">
+  <div class="chat-msgs" id="chat-msgs"></div>
+  <div class="chat-input-row">
+    <input id="chat-in" type="text" placeholder="Skriv melding..." onkeydown="if(event.key==='Enter')sendMsg()">
+    <button class="btn-primary" onclick="sendMsg()">Send</button>
+  </div>
+</div>
+
+<!-- ─── MODALER ───────────────────────────────────────────────────────────── -->
+
+<!-- Legg til på dag (kalender) -->
+<div class="modal-bg" id="day-modal">
+  <div class="modal">
+    <div class="modal-header"><h3 id="day-modal-title">Legg til</h3><button onclick="closeModal('day-modal')">✕</button></div>
+    <div class="modal-tabs">
+      <button class="mtab active" onclick="switchAddTab('event')">📅 Hendelse</button>
+      <button class="mtab" onclick="switchAddTab('chore')">✅ Oppgave</button>
+      <button class="mtab" onclick="switchAddTab('dinner')">🍽 Middag</button>
+    </div>
+
+    <!-- Hendelse -->
+    <div id="add-event-form">
+      <label>Tittel</label><input id="ae-title" type="text" placeholder="F.eks. Fotballkamp">
+      <label>Klokkeslett</label><input id="ae-time" type="text" placeholder="F.eks. 16:00">
+      <label>Sted</label><input id="ae-place" type="text" placeholder="F.eks. Idrettshallen">
+      <label>Type</label>
+      <select id="ae-type">
+        <option value="familie">Familie</option><option value="sport">Sport</option>
+        <option value="skole">Skole</option><option value="annet">Annet</option>
+      </select>
+      <label>Hvem er med?</label>
+      <div id="ae-who" class="who-checks"></div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeModal('day-modal')">Avbryt</button>
+        <button class="btn-primary" onclick="saveEvent()">Lagre</button>
+      </div>
+    </div>
+
+    <!-- Oppgave (fra dag-modal) -->
+    <div id="add-chore-form" style="display:none;">
+      <label>Navn</label><input id="ac-name" type="text" placeholder="F.eks. Støvsuge stuen">
+      <label>Ansvarlig</label><select id="ac-who"></select>
+      <label>Poeng</label>
+      <select id="ac-pts">
+        <option value="1">1 pt — Liten</option><option value="2" selected>2 pt — Vanlig</option>
+        <option value="3">3 pt — Stor</option><option value="5">5 pt — Kjempe</option>
+      </select>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeModal('day-modal')">Avbryt</button>
+        <button class="btn-primary" onclick="saveChoreFromCal()">Lagre</button>
+      </div>
+    </div>
+
+    <!-- Middag (fra dag-modal) -->
+    <div id="add-dinner-form" style="display:none;">
+      <label>Navn</label><input id="ad-name" type="text" placeholder="F.eks. Pasta Bolognese">
+      <label>Ingredienser (kommaseparert)</label>
+      <input id="ad-ings" type="text" placeholder="pasta, kjøttdeig, tomater">
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeModal('day-modal')">Avbryt</button>
+        <button class="btn-primary" onclick="saveDinnerFromCal()">Lagre</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Ny oppgave (fra oppgaver-fanen) -->
+<div class="modal-bg" id="chore-modal">
+  <div class="modal">
+    <div class="modal-header"><h3>Ny oppgave</h3><button onclick="closeModal('chore-modal')">✕</button></div>
+    <label>Navn</label><input id="cm-name" type="text" placeholder="F.eks. Vaske badet">
+    <label>Dato</label><input id="cm-date" type="date">
+    <label>Ansvarlig</label><select id="cm-who"></select>
+    <label>Poeng</label>
+    <select id="cm-pts">
+      <option value="1">1 pt — Liten</option><option value="2" selected>2 pt — Vanlig</option>
+      <option value="3">3 pt — Stor</option><option value="5">5 pt — Kjempe</option>
+    </select>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('chore-modal')">Avbryt</button>
+      <button class="btn-primary" onclick="saveChoreStandalone()">Lagre</button>
+    </div>
+  </div>
+</div>
+
+<!-- Ny middag (fra middag-fanen) -->
+<div class="modal-bg" id="dinner-modal">
+  <div class="modal">
+    <div class="modal-header"><h3>Legg til middag</h3><button onclick="closeModal('dinner-modal')">✕</button></div>
+    <label>Navn</label><input id="dm-name" type="text" placeholder="F.eks. Taco">
+    <label>Dato</label><input id="dm-date" type="date">
+    <label>Ingredienser (kommaseparert)</label>
+    <input id="dm-ings" type="text" placeholder="kjøttdeig, tortillas, ost">
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('dinner-modal')">Avbryt</button>
+      <button class="btn-primary" onclick="saveDinnerStandalone()">Lagre</button>
+    </div>
+  </div>
+</div>
+
+<!-- Ny kjøleskapsvare -->
+<div class="modal-bg" id="fridge-modal">
+  <div class="modal">
+    <div class="modal-header"><h3>Legg til vare</h3><button onclick="closeModal('fridge-modal')">✕</button></div>
+    <label>Navn</label><input id="fm-name" type="text" placeholder="F.eks. Melk">
+    <label>Seksjon</label>
+    <select id="fm-sec"><option value="fridge">Kjøleskap</option><option value="pantry">Pantry</option><option value="freezer">Fryser</option></select>
+    <label>Antall</label><input id="fm-qty" type="number" min="0" value="1">
+    <label>Enhet</label><input id="fm-unit" type="text" placeholder="liter, pakker, stk...">
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('fridge-modal')">Avbryt</button>
+      <button class="btn-primary" onclick="saveFridgeItem()">Lagre</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ── Injisert fra Flask ────────────────────────────────────────────────────────
+const CURRENT_USER = {{ user | tojson }};
+const MEMBERS      = {{ members | tojson }};
+
+// ── Aktiv bruker (kan byttes i UI) ───────────────────────────────────────────
+let activeUserId = CURRENT_USER.id;
+</script>
+<script src="/static/app.js"></script>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}Logg inn — Familiehub{% endblock %}
+{% block content %}
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-logo">🏠 Familiehub</div>
+    <h1 class="auth-title">Logg inn</h1>
+
+    <form method="POST" action="/login" class="auth-form">
+      <label>E-post</label>
+      <input type="email" name="email" placeholder="din@epost.no" required autofocus>
+      <label>Passord</label>
+      <input type="password" name="password" placeholder="••••••••" required>
+      <button type="submit" class="btn-primary">Logg inn</button>
+    </form>
+
+    <div class="auth-footer">
+      Har du ikke konto? <a href="/register">Registrer deg</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

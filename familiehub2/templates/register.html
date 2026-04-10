@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}Registrer deg — Familiehub{% endblock %}
+{% block content %}
+<div class="auth-page">
+  <div class="auth-card auth-card-wide">
+    <div class="auth-logo">🏠 Familiehub</div>
+    <h1 class="auth-title">Opprett konto</h1>
+
+    <form method="POST" action="/register" class="auth-form" id="reg-form">
+      <div class="auth-section-title">Din informasjon</div>
+      <label>Fullt navn</label>
+      <input type="text" name="name" placeholder="Ola Nordmann" required>
+      <label>E-post</label>
+      <input type="email" name="email" placeholder="din@epost.no" required>
+      <label>Passord</label>
+      <input type="password" name="password" placeholder="Min. 8 tegn" required minlength="6">
+
+      <div class="auth-section-title" style="margin-top:20px;">Familie</div>
+      <div class="family-choice">
+        <label class="choice-card" id="choice-create">
+          <input type="radio" name="action" value="create" onchange="toggleChoice('create')">
+          <div class="choice-icon">🏡</div>
+          <div class="choice-label">Opprett ny familie</div>
+        </label>
+        <label class="choice-card" id="choice-join">
+          <input type="radio" name="action" value="join" onchange="toggleChoice('join')">
+          <div class="choice-icon">🔑</div>
+          <div class="choice-label">Bli med i familie</div>
+        </label>
+      </div>
+
+      <div id="field-create" class="choice-field" style="display:none;">
+        <label>Familienavn</label>
+        <input type="text" name="family_name" placeholder="F.eks. Familie Nordmann">
+      </div>
+      <div id="field-join" class="choice-field" style="display:none;">
+        <label>Invitasjonskode</label>
+        <input type="text" name="invite_code" placeholder="F.eks. AB12CD34" style="text-transform:uppercase;">
+        <div class="hint">Be en forelder i familien om koden — den finnes under Familieinnstillinger.</div>
+      </div>
+
+      <button type="submit" class="btn-primary" style="margin-top:20px;">Opprett konto</button>
+    </form>
+
+    <div class="auth-footer">
+      Har du allerede konto? <a href="/login">Logg inn</a>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleChoice(choice) {
+  document.getElementById('field-create').style.display = choice === 'create' ? 'block' : 'none';
+  document.getElementById('field-join').style.display   = choice === 'join'   ? 'block' : 'none';
+  document.getElementById('choice-create').classList.toggle('selected', choice === 'create');
+  document.getElementById('choice-join').classList.toggle('selected',   choice === 'join');
+}
+</script>
+{% endblock %}

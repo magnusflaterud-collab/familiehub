@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}Familie — Familiehub{% endblock %}
+{% block content %}
+
+<div class="topbar sticky">
+  <a href="/dashboard" class="topbar-back">← Tilbake</a>
+  <span class="logo">🏠 {{ family.name }}</span>
+  <a href="/logout" class="topbar-link">Logg ut</a>
+</div>
+
+<div class="section-wrap" style="max-width:600px;margin:32px auto;">
+  <h2 style="margin-bottom:24px;">Familieinnstillinger</h2>
+
+  <!-- Invitasjonskode -->
+  <div class="info-card">
+    <div class="info-card-title">Invitasjonskode</div>
+    <div class="invite-code">{{ family.invite_code }}</div>
+    <div class="hint">Del denne koden med familiemedlemmer slik at de kan registrere seg og bli med.</div>
+  </div>
+
+  <!-- Familiemedlemmer -->
+  <div class="info-card" style="margin-top:16px;">
+    <div class="info-card-title">Familiemedlemmer</div>
+    {% for m in members %}
+    <div class="member-row">
+      <div class="member-av" style="background:{{ m.bg_color }};color:{{ m.text_color }};">{{ m.initials }}</div>
+      <div class="member-info">
+        <div class="member-name">{{ m.name }}</div>
+        <div class="member-role">{{ 'Forelder' if m.role == 'parent' else 'Barn' }}{% if m.email %} · {{ m.email }}{% endif %}</div>
+      </div>
+      {% if user.role == 'parent' and m.id != user.id %}
+      <div class="member-actions">
+        {% if m.role == 'child' %}
+        <form method="POST" action="/family/promote/{{ m.id }}" style="display:inline;">
+          <button type="submit" class="btn-sm">Gjør til forelder</button>
+        </form>
+        {% endif %}
+        <form method="POST" action="/family/remove/{{ m.id }}" onsubmit="return confirm('Fjerne {{ m.name }}?');" style="display:inline;">
+          <button type="submit" class="btn-sm btn-danger">Fjern</button>
+        </form>
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Legg til barn -->
+  {% if user.role == 'parent' %}
+  <div class="info-card" style="margin-top:16px;">
+    <div class="info-card-title">Legg til barn</div>
+    <div class="hint" style="margin-bottom:12px;">Barn trenger ikke e-post eller passord — du administrerer dem.</div>
+    <form method="POST" action="/family/add-child" class="inline-form">
+      <input type="text" name="name" placeholder="Barnets navn" required>
+      <button type="submit" class="btn-primary">Legg til</button>
+    </form>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
